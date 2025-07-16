@@ -4,119 +4,110 @@ import numpy as np
 import plotly.express as px
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="Dashboard Agrícola de Videiras", layout="wide")
+st.set_page_config(page_title="Dashboard Fitossanitário - Videiras", layout="wide")
 
-# Estilo moderno e profissional
-def estilo_global():
-    st.markdown("""
-        <style>
-        html, body, [class*="css"]  {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f0f4f8;
-        }
-        .stTabs [data-baseweb="tab"] {
-            background-color: #ffffff;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 10px;
-            margin-right: 10px;
-        }
-        .stTabs [aria-selected="true"] {
-            background-color: #dbeafe;
-            border-bottom: 4px solid #2563eb;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+# --- Estilo global e cores de alerta ---
+st.markdown("""
+    <style>
+    body {
+        background: #f0f4f8;
+        font-family: 'Segoe UI', sans-serif;
+        color: #1c1c1e;
+    }
+    .sidebar .sidebar-content {
+        background-color: #e3f2fd;
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+    .metric-label {
+        font-weight: 600 !important;
+    }
+    .alert-high {
+        color: #b00020;
+        font-weight: 700;
+    }
+    .alert-medium {
+        color: #f57c00;
+        font-weight: 700;
+    }
+    .alert-low {
+        color: #2e7d32;
+        font-weight: 700;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-estilo_global()
+# --- Dados fictícios ---
+dias = pd.date_range(datetime.today(), periods=7)
+clima = pd.DataFrame({
+    'Data': dias,
+    'Chuva (mm)': np.random.randint(0, 30, 7),
+    'Temperatura (°C)': np.random.uniform(15, 30, 7),
+    'Vento (km/h)': np.random.uniform(2, 15, 7),
+    'Umidade (%)': np.random.uniform(60, 95, 7)
+})
+pulverizacao_horas = [f"{h}:00" for h in range(6, 19)]
+vento = np.random.uniform(1, 12, len(pulverizacao_horas))
+chuva_chance = np.random.uniform(0, 0.5, len(pulverizacao_horas)) * 100
+janela_pulverizacao = pd.DataFrame({
+    'Hora': pulverizacao_horas,
+    'Vento (km/h)': vento,
+    'Chance de Chuva (%)': chuva_chance
+})
+aplicacoes = pd.DataFrame({
+    'Data': pd.date_range("2025-06-20", periods=5),
+    'Produto': ['Cobre', 'Isaria', 'Trichoderma', 'Captan', 'Mancozeb'],
+    'Doença Alvo': ['Míldio', 'Botrytis', 'Oídio', 'Oídio', 'Míldio'],
+    'Eficiência (%)': [75, 88, 92, 70, 76]
+})
+risco_doenca = np.clip(np.random.normal(65, 20, 7), 0, 100)
 
-# Abas reorganizadas
-abas = st.tabs([
-    "🌿 Início",
-    "📡 Clima & Ambiente",
-    "🛡️ Doenças e Riscos",
-    "💧 Pulverizações",
-    "📊 Desempenho Técnico",
-    "📘 Ajuda e Manual"
-])
+# --- Sidebar Navegação ---
+st.sidebar.title("📋 Menu Rápido")
+menu = st.sidebar.radio("Escolha uma opção:", 
+                        ['🏠 Resumo', '💧 Pulverização', '🦠 Riscos e Doenças', '📊 Histórico', '📘 Manual'])
 
-# Aba 1 - Início
-with abas[0]:
-    st.title("🌿 Painel Inicial - Situação da Lavoura")
-    st.markdown("""
-    Esta página resume os principais indicadores da sua lavoura:
-    - Última aplicação
-    - Nível atual de risco
-    - Recomendação rápida
-    """)
+# --- Dashboard principal ---
+if menu == '🏠 Resumo':
+    st.title("🌿 Resumo da Lavoura - Visão Geral")
     col1, col2, col3 = st.columns(3)
-    col1.metric("Última Aplicação", "10/07/2025")
-    col2.metric("Risco Atual - Míldio", "Alto")
-    col3.success("Recomendação: Aguardar 12h")
-    st.image("https://images.unsplash.com/photo-1600694322840-e50ec0fd1d6f", use_container_width=True)
+    col1.metric("Última Pulverização", "10/07/2025")
+    risco_nivel = 'Alto'
+    col2.metric("Risco Atual de Míldio", risco_nivel)
+    if risco_nivel == 'Alto':
+        col2.markdown('<p class="alert-high">⚠️ Atenção: risco elevado!</p>', unsafe_allow_html=True)
+    col3.success("Recomendação: Aguardar 12h antes da próxima aplicação")
 
-# Aba 2 - Clima & Ambiente
-with abas[1]:
-    st.title("📡 Monitoramento Climático e Janela de Aplicação")
-    dias = pd.date_range(datetime.today(), periods=7)
-    clima = pd.DataFrame({
-        'Data': dias,
-        'Chuva (mm)': np.random.randint(0, 30, 7),
-        'Temp (°C)': np.random.uniform(15, 30, 7),
-        'Vento (km/h)': np.random.uniform(2, 14, 7),
-        'Umidade (%)': np.random.uniform(60, 90, 7)
-    })
-    st.subheader("📈 Previsão Climática - 7 dias")
-    st.line_chart(clima.set_index("Data"))
+    st.markdown("### Previsão Climática para os Próximos 7 Dias")
+    st.line_chart(clima.set_index('Data')[['Chuva (mm)', 'Temperatura (°C)', 'Umidade (%)']])
 
-    st.subheader("💨 Melhor Horário para Aplicar")
-    horas = [f"{h}:00" for h in range(6, 19)]
-    vento = np.random.uniform(1, 12, len(horas))
-    chuva = np.random.uniform(0, 0.5, len(horas)) * 100
-    janela = pd.DataFrame({
-        'Hora': horas,
-        'Vento (km/h)': vento,
-        'Chuva (%)': chuva
-    })
-    fig = px.line(janela, x='Hora', y='Vento (km/h)', markers=True)
-    fig.add_scatter(x=janela['Hora'], y=janela['Chuva (%)'], mode='lines+markers', name='Chuva (%)')
+elif menu == '💧 Pulverização':
+    st.title("💧 Janela Ideal para Pulverização")
+    st.markdown("Avalie os melhores horários para aplicação considerando vento e chuva.")
+    fig = px.line(janela_pulverizacao, x='Hora', y='Vento (km/h)', markers=True, title="Velocidade do Vento")
+    fig.add_scatter(x=janela_pulverizacao['Hora'], y=janela_pulverizacao['Chance de Chuva (%)'], mode='lines+markers', name='Chance de Chuva (%)')
     st.plotly_chart(fig, use_container_width=True)
 
-# Aba 3 - Doenças e Riscos
-with abas[2]:
-    st.title("🛡️ Modelagem de Doenças")
-    st.markdown("Risco previsto com base no clima e estágio da videira")
-    risco = np.clip(np.random.normal(65, 20, 7), 0, 100)
-    fig_risco = px.area(x=dias, y=risco, labels={'x': 'Data', 'y': 'Risco (%)'}, title="Risco Estimado para Oídio")
+elif menu == '🦠 Riscos e Doenças':
+    st.title("🦠 Risco Estimado de Doenças")
+    st.markdown("Previsão do risco para oídio baseado nas condições climáticas e fenologia.")
+    fig_risco = px.area(x=dias, y=risco_doenca, labels={'x':'Data', 'y':'Risco (%)'}, title="Risco de Oídio")
     st.plotly_chart(fig_risco, use_container_width=True)
 
-# Aba 4 - Pulverizações
-with abas[3]:
-    st.title("💧 Histórico de Aplicações")
-    dados = pd.DataFrame({
-        'Data': pd.date_range("2025-06-15", periods=5),
-        'Produto': ['Trichoderma', 'Cobre', 'Bacillus', 'Captan', 'Mancozeb'],
-        'Doença-Alvo': ['Míldio', 'Oídio', 'Botrytis', 'Oídio', 'Míldio'],
-        'Eficiência (%)': [84, 79, 88, 70, 76]
-    })
-    st.dataframe(dados)
-    st.bar_chart(dados.set_index("Data")["Eficiência (%)"])
+elif menu == '📊 Histórico':
+    st.title("📊 Histórico de Aplicações e Eficiência")
+    st.dataframe(aplicacoes)
+    st.bar_chart(aplicacoes.set_index('Data')['Eficiência (%)'])
 
-# Aba 5 - Desempenho Técnico
-with abas[4]:
-    st.title("📊 Análise Técnica por Talhão")
-    st.markdown("Compare o desempenho técnico por produto ou ciclo")
-    st.line_chart(dados.set_index("Data")["Eficiência (%)"])
-
-# Aba 6 - Ajuda
-with abas[5]:
-    st.title("📘 Manual do Produtor")
+elif menu == '📘 Manual':
+    st.title("📘 Manual de Uso do Dashboard")
     st.markdown("""
-    Este painel foi desenvolvido para ajudar você a tomar decisões com base:
-    - No clima e nas doenças
-    - No histórico das aplicações
-    - Na janela ideal de manejo
-
-    Navegue pelas abas acima para visualizar os dados.
-    Em breve: vídeos e IA para diagnóstico visual.
+    ### Como usar este painel:
+    - Navegue pelo menu lateral para acessar as informações rapidamente.
+    - Na aba 'Resumo' acompanhe os dados mais importantes da lavoura.
+    - Em 'Pulverização' veja a janela ideal para aplicação.
+    - Em 'Riscos e Doenças' monitore o risco das principais doenças.
+    - No 'Histórico' consulte o desempenho dos produtos aplicados.
+    
+    Para dúvidas, entre em contato com seu técnico agrícola.
     """)

@@ -4,137 +4,119 @@ import numpy as np
 import plotly.express as px
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="Dashboard Fitossanitário para Videiras", layout="wide")
+st.set_page_config(page_title="Dashboard Agrícola de Videiras", layout="wide")
 
-# Estilo mais amigável e interativo para produtores
-st.markdown("""
-    <style>
-    body {
-        background-color: #f9fafb;
-        font-family: 'Segoe UI', sans-serif;
-    }
-    .block-container {
-        padding: 2rem 2rem 4rem;
-    }
-    h1, h2, h3 {
-        color: #1f2937;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background-color: #ffffff;
-        border-radius: 12px;
-        margin: 0 0.5rem;
-        padding: 1rem;
-        border: 2px solid #cbd5e1;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #e0f2fe;
-        border-bottom: 4px solid #0284c7;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# Estilo moderno e profissional
+def estilo_global():
+    st.markdown("""
+        <style>
+        html, body, [class*="css"]  {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .stTabs [data-baseweb="tab"] {
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            margin-right: 10px;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #dbeafe;
+            border-bottom: 4px solid #2563eb;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-st.image("https://images.unsplash.com/photo-1600694322840-e50ec0fd1d6f", caption="Painel inteligente para decisões de campo", use_container_width=True)
+estilo_global()
 
-# Menu lateral simplificado para produtores
-st.sidebar.title("Menu do Produtor")
-st.sidebar.info("Selecione uma aba acima para começar")
-modo = st.sidebar.radio("Modo de Visualização", ["Produtor", "Técnico"], index=0)
-
-# Abas principais organizadas
+# Abas reorganizadas
 abas = st.tabs([
-    "🏠 Visão Geral",
-    "🌦️ Clima Atual",
-    "💨 Janela de Pulverização",
-    "🦠 Risco de Doenças",
-    "📄 Aplicações",
-    "📊 Análises",
-    "📘 Ajuda"
+    "🌿 Início",
+    "📡 Clima & Ambiente",
+    "🛡️ Doenças e Riscos",
+    "💧 Pulverizações",
+    "📊 Desempenho Técnico",
+    "📘 Ajuda e Manual"
 ])
 
-# Aba 1: Visão Geral
+# Aba 1 - Início
 with abas[0]:
-    st.header("🌿 Visão Geral da Lavoura")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Última Pulverização", "10/07/2025")
-        st.metric("Risco Atual: Míldio", "Alto", delta="+25%")
-    with col2:
-        st.success("Situação: ⚠️ Atenção — monitorar condições")
-
+    st.title("🌿 Painel Inicial - Situação da Lavoura")
     st.markdown("""
-    Este painel resume as principais informações da lavoura:
-    - Condições atuais do tempo
-    - Histórico de aplicações
-    - Doenças em alerta
+    Esta página resume os principais indicadores da sua lavoura:
+    - Última aplicação
+    - Nível atual de risco
+    - Recomendação rápida
     """)
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Última Aplicação", "10/07/2025")
+    col2.metric("Risco Atual - Míldio", "Alto")
+    col3.success("Recomendação: Aguardar 12h")
+    st.image("https://images.unsplash.com/photo-1600694322840-e50ec0fd1d6f", use_container_width=True)
 
-# Aba 2: Clima Atual
+# Aba 2 - Clima & Ambiente
 with abas[1]:
-    st.header("🌦️ Previsão Climática - 7 Dias")
+    st.title("📡 Monitoramento Climático e Janela de Aplicação")
     dias = pd.date_range(datetime.today(), periods=7)
-    clima_df = pd.DataFrame({
+    clima = pd.DataFrame({
         'Data': dias,
-        'Chuva (mm)': np.random.randint(0, 25, size=7),
-        'Temperatura (°C)': np.random.uniform(14, 29, size=7),
-        'Vento (km/h)': np.random.uniform(2, 12, size=7),
-        'Umidade (%)': np.random.uniform(60, 95, size=7)
+        'Chuva (mm)': np.random.randint(0, 30, 7),
+        'Temp (°C)': np.random.uniform(15, 30, 7),
+        'Vento (km/h)': np.random.uniform(2, 14, 7),
+        'Umidade (%)': np.random.uniform(60, 90, 7)
     })
-    st.line_chart(clima_df.set_index("Data"))
+    st.subheader("📈 Previsão Climática - 7 dias")
+    st.line_chart(clima.set_index("Data"))
 
-# Aba 3: Janela de Pulverização
-with abas[2]:
-    st.header("💨 Melhor Horário para Aplicação")
+    st.subheader("💨 Melhor Horário para Aplicar")
     horas = [f"{h}:00" for h in range(6, 19)]
     vento = np.random.uniform(1, 12, len(horas))
     chuva = np.random.uniform(0, 0.5, len(horas)) * 100
-    janela_df = pd.DataFrame({
+    janela = pd.DataFrame({
         'Hora': horas,
         'Vento (km/h)': vento,
-        'Chance de Chuva (%)': chuva
+        'Chuva (%)': chuva
     })
-    fig = px.line(janela_df, x='Hora', y='Vento (km/h)', markers=True, title="Velocidade do Vento")
-    fig.add_scatter(x=janela_df['Hora'], y=janela_df['Chance de Chuva (%)'], mode='lines+markers', name='Chuva (%)')
+    fig = px.line(janela, x='Hora', y='Vento (km/h)', markers=True)
+    fig.add_scatter(x=janela['Hora'], y=janela['Chuva (%)'], mode='lines+markers', name='Chuva (%)')
     st.plotly_chart(fig, use_container_width=True)
 
-# Aba 4: Risco de Doenças
+# Aba 3 - Doenças e Riscos
+with abas[2]:
+    st.title("🛡️ Modelagem de Doenças")
+    st.markdown("Risco previsto com base no clima e estágio da videira")
+    risco = np.clip(np.random.normal(65, 20, 7), 0, 100)
+    fig_risco = px.area(x=dias, y=risco, labels={'x': 'Data', 'y': 'Risco (%)'}, title="Risco Estimado para Oídio")
+    st.plotly_chart(fig_risco, use_container_width=True)
+
+# Aba 4 - Pulverizações
 with abas[3]:
-    st.header("🦠 Previsão de Doenças")
-    risco = np.clip(np.random.normal(60, 20, 7), 0, 100)
-    fig2 = px.area(x=dias, y=risco, title="Risco Estimado para Míldio", labels={'x': 'Data', 'y': 'Risco (%)'})
-    st.plotly_chart(fig2, use_container_width=True)
-
-# Aba 5: Aplicações
-with abas[4]:
-    st.header("📄 Histórico de Pulverizações")
-    aplicacoes = pd.DataFrame({
-        'Data': pd.date_range("2025-06-20", periods=4),
-        'Produto': ['Cobre', 'Isaria', 'Trichoderma', 'Captan'],
-        'Doença Alvo': ['Míldio', 'Botrytis', 'Oídio', 'Míldio'],
-        'Eficácia (%)': [75, 88, 92, 70]
+    st.title("💧 Histórico de Aplicações")
+    dados = pd.DataFrame({
+        'Data': pd.date_range("2025-06-15", periods=5),
+        'Produto': ['Trichoderma', 'Cobre', 'Bacillus', 'Captan', 'Mancozeb'],
+        'Doença-Alvo': ['Míldio', 'Oídio', 'Botrytis', 'Oídio', 'Míldio'],
+        'Eficiência (%)': [84, 79, 88, 70, 76]
     })
-    st.dataframe(aplicacoes)
-    st.bar_chart(aplicacoes.set_index("Data")["Eficácia (%)"])
+    st.dataframe(dados)
+    st.bar_chart(dados.set_index("Data")["Eficiência (%)"])
 
-# Aba 6: Análises
+# Aba 5 - Desempenho Técnico
+with abas[4]:
+    st.title("📊 Análise Técnica por Talhão")
+    st.markdown("Compare o desempenho técnico por produto ou ciclo")
+    st.line_chart(dados.set_index("Data")["Eficiência (%)"])
+
+# Aba 6 - Ajuda
 with abas[5]:
-    st.header("📊 Comparativos Técnicos")
+    st.title("📘 Manual do Produtor")
     st.markdown("""
-    Analise o desempenho dos produtos e das aplicações em relação às condições climáticas:
-    - Eficiência por talhão
-    - Comparativo por estação ou variedade
-    """)
+    Este painel foi desenvolvido para ajudar você a tomar decisões com base:
+    - No clima e nas doenças
+    - No histórico das aplicações
+    - Na janela ideal de manejo
 
-# Aba 7: Ajuda
-with abas[6]:
-    st.header("📘 Guia do Usuário")
-    st.markdown("""
-    > **Como usar este painel:**
-    - Navegue pelas abas acima
-    - Cada aba possui dados interativos
-    - Use os gráficos para entender o momento ideal de ação
-
-    Em breve:
-    - Vídeos com tutoriais rápidos
-    - Chat de ajuda automatizado
+    Navegue pelas abas acima para visualizar os dados.
+    Em breve: vídeos e IA para diagnóstico visual.
     """)
